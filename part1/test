@@ -1,0 +1,27 @@
+const x = 1
+x
+let y = 5
+console.log(x,y)
+y += 10
+const t = [1,2,3]
+t
+t.push(5)
+t
+t.push(4)
+t.length
+t[0]
+t.forEach(value => console.log(value))
+t
+t2 = t.concat(12)
+t
+t2
+m1 = t.map(v => v*2)
+m2 = t.map(v => '<li>' + v + '</li>')
+t
+const [first,sec,other] = t
+first
+sec
+other
+cosnt [x,y,...z] = t
+let [q,w,...e] = t
+e
