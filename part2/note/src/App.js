@@ -1,27 +1,44 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Note from './components/Note'
+import axios from 'axios';
 
-const App = (props) => {
+const App = () => {
 
-  const [notes, setNotes] = useState(props.notes)
+  const [notes, setNotes] = useState([])
+
+  const baseUrl = "http://localhost:3001/notes";
+
+  const hook = () => {
+    console.log('effect');
+    axios
+      .get(baseUrl)
+      .then(response => {
+        console.log('promise fulfilled');
+        setNotes(response.data)
+      });
+  }
+
+  useEffect(hook, []);
+  
+  console.log('render', notes.length, 'notes');
 
   //存储表单中的内容
   const [valueNote, setValueNote] = useState('input a note')
 
   //控制是否显示全部的note
-  const [showAll,setShowAll] = useState(true)
+  const [showAll, setShowAll] = useState(true)
 
   //根据条件过滤Note
-  const notesToShow = showAll ? 
-                    notes : notes.filter(note => note.important)
+  const notesToShow = showAll ?
+    notes : notes.filter(note => note.important)
 
   const addNote = (event) => {
     event.preventDefault();
     const newNote = {
-      id : notes.length + 1,
-      content : valueNote ,
-      date : new Date().toISOString ,
-      importance : Math.random() < 0.5
+      id: notes.length + 1,
+      content: valueNote,
+      date: new Date().toISOString,
+      importance: Math.random() < 0.5
     }
     setNotes(notes.concat(newNote))
     setValueNote('')
@@ -45,7 +62,7 @@ const App = (props) => {
         )}
       </ul>
       <form onSubmit={addNote}>
-        <input 
+        <input
           value={valueNote}
           onChange={handleNoteChange} />
         <button type="submit">addNote</button>
