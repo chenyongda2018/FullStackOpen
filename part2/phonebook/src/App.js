@@ -1,12 +1,23 @@
-import React, { useState } from 'react'
+import React, { useState ,useEffect } from 'react';
+import axios from 'axios';
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    {
-      name: 'Lei Jun',
-      tel: '1234234234'
-    }
-  ])
+  const [persons, setPersons] = useState([])
+
+  const baseUrl = "http://localhost:3001/persons";
+
+  const hook = () => {
+    console.log('hook called');
+    axios
+      .get(baseUrl)
+      .then(response => {
+        console.log('response: ',response.data);
+        setPersons(response.data);
+      });
+  }
+
+  useEffect(hook,[]);
+
 
   const [personValue, setPersonValue] = useState('')
   const [curTel, setCurTel] = useState('')
@@ -14,7 +25,7 @@ const App = () => {
 
   const personsShow = filter === '' ?
     persons : persons.filter(person =>
-      person.name.includes(filter))
+      person.name.toLowerCase.includes(filter.toLowerCase))
 
   const handleInputValue = (event) => {
     console.log('input name :', event.target.value);
@@ -36,7 +47,7 @@ const App = () => {
 
     const newBook = persons.concat({
       name: personValue,
-      tel: curTel
+      number: curTel
     });
     setPersons(newBook);
     setPersonValue('')
@@ -60,9 +71,12 @@ const App = () => {
         fliter show with <input onChange={handleInputFilter} />
       </div>
       <form onSubmit={addNewPerson}>
-        <div>name: <input value={personValue} onChange={handleInputValue} /></div>
-        <div>Tel: <input value={curTel} onChange={handleInputTel} /></div>
-        <div><button type="submit">Add</button></div>
+        <div>name: 
+          <input value={personValue} onChange={handleInputValue} /></div>
+        <div>Tel: 
+          <input value={curTel} onChange={handleInputTel} /></div>
+        <div>
+          <button type="submit">Add</button></div>
       </form>
       <PersonList persons={personsShow} />
     </div>
@@ -76,7 +90,7 @@ const PersonList = ({ persons }) => {
       <ul>
         {persons.map((person, id) =>
           <li key={id}>
-            {person.name} : {person.tel}
+            {person.name} : {person.number}
           </li>
         )}
       </ul>

@@ -14,7 +14,7 @@ const App = () => {
       .get(baseUrl)
       .then(response => {
         console.log('promise fulfilled');
-        setNotes(response.data)
+        setNotes(response.data);
       });
   }
 
