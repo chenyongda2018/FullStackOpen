@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import Note from './components/Note'
+import {Note,Notification} from './components/Note'
 import noteService from './services/notes'
+import './index.css'
 
 const App = () => {
 
@@ -15,6 +16,8 @@ const App = () => {
   //根据条件过滤Note
   const notesToShow = showAll ?
     notes : notes.filter(note => note.important)
+
+  const [errMsg,setErrMsg] = useState('Something happened error...');
 
   const fetchNoteData = () => {
     console.log('effect');
@@ -69,7 +72,10 @@ const App = () => {
         setNotes(notes.map(note => note.id == id ? response.data : note));
       })
       .catch(error => {
-        alert(`the note ${note.content} was already deleted from server.`);
+        setErrMsg(`the note ${note.content} was already deleted from server.`)
+        setTimeout(()=>{
+          setErrMsg(null);
+        },5000)
         //将不存在的note从集合中删除
         setNotes(notes.filter(n => n.id !== id));
       });
@@ -83,6 +89,7 @@ const App = () => {
   return (
     <div>
       <h1>Notes</h1>
+      <Notification message={errMsg} />
       <button onClick={() => setShowAll(!showAll)}>
         show {showAll ? 'important' : 'all'}
       </button>
