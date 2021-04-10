@@ -1,23 +1,8 @@
 import React, { useState ,useEffect } from 'react';
-import axios from 'axios';
+import PhoneApi from './services/phoneBookService';
 
 const App = () => {
   const [persons, setPersons] = useState([])
-
-  const baseUrl = "http://localhost:3001/persons";
-
-  const hook = () => {
-    console.log('hook called');
-    axios
-      .get(baseUrl)
-      .then(response => {
-        console.log('response: ',response.data);
-        setPersons(response.data);
-      });
-  }
-
-  useEffect(hook,[]);
-
 
   const [personValue, setPersonValue] = useState('')
   const [curTel, setCurTel] = useState('')
@@ -25,10 +10,20 @@ const App = () => {
 
   const personsShow = filter === '' ?
     persons : persons.filter(person =>
-      person.name.toLowerCase.includes(filter.toLowerCase))
+      person.name.toLowerCase().includes(filter.toLowerCase()))
+
+  const fetchData = () => {
+    console.log('fetchData called');
+    PhoneApi
+      .getAll()
+      .then(response => {
+        console.log('response: ',response.data);
+        setPersons(response.data);
+      });
+  }
+  useEffect(fetchData,[]);
 
   const handleInputValue = (event) => {
-    console.log('input name :', event.target.value);
     setPersonValue(event.target.value);
   }
 
@@ -41,26 +36,59 @@ const App = () => {
   }
 
   const addNewPerson = (event) => {
-
     event.preventDefault();
-    if (!checkName(personValue)) return;
+    
+    if (isExist(personValue)) {
+      if(window.confirm(`${personValue} was already added in the PhoneBook,replace the old number with a new one?`)) {
 
-    const newBook = persons.concat({
-      name: personValue,
-      number: curTel
-    });
-    setPersons(newBook);
-    setPersonValue('')
+        const existPerson = persons.find(p => p.name === personValue);
+        const updatePerson = {
+          ...existPerson,
+          number: curTel
+        }
+        PhoneApi
+        .updatePhone(existPerson.id,updatePerson)
+        .then(rsp => {
+          console.log('update User: ',rsp.data);
+          //更新集合
+          setPersons(persons.map(p => 
+            p.id === existPerson.id ? rsp.data : p));
+        });
+      }
+    } else {
+      const newBook = {
+        name: personValue,
+        number: curTel
+      }
+      PhoneApi
+      .addNewPhone(newBook)
+      .then(rsp => {
+        console.log('addNote rsp: ',rsp.data);
+        setPersons(persons.concat(rsp.data));
+      })
+    }
+    setPersonValue('');
+    setCurTel('');
   }
 
-  const checkName = (value) => {
+  const delPhone = (delPerson) => {
+    if(!window.confirm(`Delete ${delPerson.name} ?`)) return;
+    PhoneApi
+      .deletePhone(delPerson.id)
+      .then(rsp => {
+        console.log('del phone rsp: ',rsp.data);
+      })
+    //更新集合
+    setPersons(persons.filter(p => p.id !== delPerson.id));
+  }
+
+  const isExist = (name) => {
     for (let person of persons) {
-      if (person.name === value) {
-        alert(`${value} was already added in the PhoneBook`)
-        return false;
+      if (person.name === name) {
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   return (
@@ -78,25 +106,36 @@ const App = () => {
         <div>
           <button type="submit">Add</button></div>
       </form>
-      <PersonList persons={personsShow} />
+      <PersonList persons={personsShow} delPhone={delPhone}/>
     </div>
   )
 }
 
-const PersonList = ({ persons }) => {
+const PersonList = ({ persons,delPhone}) => {
   return (
     <div>
       <h3>Numbers</h3>
       <ul>
         {persons.map((person, id) =>
           <li key={id}>
-            {person.name} : {person.number}
+            <PersonItem person={person} delPhone={()=>{delPhone(person)}}/>
           </li>
         )}
       </ul>
     </div>
   )
 }
+
+const PersonItem = ({person, delPhone}) => {
+
+  return (
+    <p>
+      {person.name} : {person.number}
+      <button onClick={delPhone}>Delete</button>
+    </p>
+  );
+}
+
 
 
 

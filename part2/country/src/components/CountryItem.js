@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 
@@ -30,7 +30,7 @@ const CountryItem = ({ data }) => {
             <p>population:{data.population}</p>
             <CountryLanguages languages={data.languages} />
             <img src={data.flag} width="200" />
-            <WeatherInfo data={data}/>
+            <WeatherInfo data={data} />
         </div>
     )
 }
@@ -50,27 +50,29 @@ const CountryLanguages = ({ languages }) => {
 }
 
 //Weather info
-const WeatherInfo = ({data}) => {
+const WeatherInfo = ({ data }) => {
 
     const currentWeatherApi = `http://api.weatherstack.com/current?access_key=${process.env.REACT_APP_WEATHER_API_KEY}&query=${data.name}`;
 
-    const [weatherData,setWeatherData] = useState('');
+    const [weatherData, setWeatherData] = useState('');
 
     const fetchWeatherData = () => {
-        console.log('weather api: ',currentWeatherApi);
+        console.log('weather api: ', currentWeatherApi);
         axios.get(currentWeatherApi)
             .then(response => {
-                console.log('weather :',response.data);
+                console.log('weather :', response.data);
                 setWeatherData(response.data.current);
             });
     }
 
-    useEffect(fetchWeatherData,[]);
+    useEffect(fetchWeatherData, []);
 
-    return(
+    return (
         <div>
             <h3>Weather in {data.name}:</h3>
-            <img src={weatherData.weather_icons}/>
+            <p>Temperature: {weatherData.temperature} Celcius</p>
+            <p>Wind: {weatherData.wind_speed}</p>
+            <img src={weatherData.weather_icons} />
         </div>
     );
 }
