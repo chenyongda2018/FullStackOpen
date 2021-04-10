@@ -1,5 +1,7 @@
 import React, { useState ,useEffect } from 'react';
 import PhoneApi from './services/phoneBookService';
+import Notification from './components/notification';
+import './index.css'
 
 const App = () => {
   const [persons, setPersons] = useState([])
@@ -7,6 +9,8 @@ const App = () => {
   const [personValue, setPersonValue] = useState('')
   const [curTel, setCurTel] = useState('')
   const [filter, setFilter] = useState('')
+
+  const [notificationMessage,setNotificationMessage] = useState(null);
 
   const personsShow = filter === '' ?
     persons : persons.filter(person =>
@@ -38,6 +42,7 @@ const App = () => {
   const addNewPerson = (event) => {
     event.preventDefault();
     
+    //若是已存在用户，则询问是否要替换
     if (isExist(personValue)) {
       if(window.confirm(`${personValue} was already added in the PhoneBook,replace the old number with a new one?`)) {
 
@@ -50,6 +55,7 @@ const App = () => {
         .updatePhone(existPerson.id,updatePerson)
         .then(rsp => {
           console.log('update User: ',rsp.data);
+          showNotification(`Updated ${updatePerson.name}`);
           //更新集合
           setPersons(persons.map(p => 
             p.id === existPerson.id ? rsp.data : p));
@@ -64,6 +70,7 @@ const App = () => {
       .addNewPhone(newBook)
       .then(rsp => {
         console.log('addNote rsp: ',rsp.data);
+        showNotification(`Added ${personValue}`);
         setPersons(persons.concat(rsp.data));
       })
     }
@@ -91,14 +98,23 @@ const App = () => {
     return false;
   }
 
+  const showNotification = (message) => {
+    setNotificationMessage(message);
+    setTimeout(()=>{
+      setNotificationMessage(null);
+    },5000);
+  }
+
   return (
     <div>
       <h1>Phone book</h1>
-      <h3>Search</h3>
+      <Notification
+        message={notificationMessage} />
       <div>
         fliter show with <input onChange={handleInputFilter} />
       </div>
       <form onSubmit={addNewPerson}>
+        <h3>Add a new </h3>
         <div>name: 
           <input value={personValue} onChange={handleInputValue} /></div>
         <div>Tel: 
