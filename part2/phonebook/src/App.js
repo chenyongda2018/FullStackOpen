@@ -11,6 +11,7 @@ const App = () => {
   const [filter, setFilter] = useState('')
 
   const [notificationMessage,setNotificationMessage] = useState(null);
+  const [errorMsg,setErrMsg] = useState(null);
 
   const personsShow = filter === '' ?
     persons : persons.filter(person =>
@@ -59,6 +60,9 @@ const App = () => {
           //更新集合
           setPersons(persons.map(p => 
             p.id === existPerson.id ? rsp.data : p));
+        })
+        .catch(error => {
+          showErrorMsg(`Infomation of ${updatePerson.name} has already removed from the server`);
         });
       }
     } else {
@@ -105,11 +109,19 @@ const App = () => {
     },5000);
   }
 
+  const showErrorMsg = (errorMessage) => {
+    setErrMsg(errorMessage);
+    setTimeout(()=>{
+      setErrMsg(null);
+    },5000);
+  }
+
   return (
     <div>
       <h1>Phone book</h1>
       <Notification
-        message={notificationMessage} />
+        message={notificationMessage}
+        errorMsg={errorMsg}/>
       <div>
         fliter show with <input onChange={handleInputFilter} />
       </div>

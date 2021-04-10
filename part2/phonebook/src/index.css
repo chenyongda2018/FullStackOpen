@@ -4,12 +4,3 @@ h3{
     font-style:italic;
 }
 
-.notification {
-    color: green;
-    background: lightgray;
-    padding: 15px;
-    border-style: solid;
-    border-radius: 5px;
-    font-size: 20px;
-    margin-bottom: 20px;
-}
