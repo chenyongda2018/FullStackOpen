@@ -1,7 +1,25 @@
 const express = require('express');
+const morgan = require('morgan');
+
 const app = express();
 
 app.use(express.json());
+morgan.token('body',(req,rsp) => JSON.stringify(req.body))
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
+
+/**
+ * 对未知页面处理
+ * @param {*} req 
+ * @param {*} rsp 
+ */
+const unknownEndpoint = (req,rsp,next) => {
+    if(!req.path.startsWith('/api/persons')) {
+        return rsp.status(404).send({error: 'uknown error.'});
+    }
+    next();
+}
+
+app.use(unknownEndpoint);
 
 let persons =  [
     {
@@ -61,9 +79,11 @@ app.get('/api/persons/:id',(req,rsp) => {
     return rsp.status(400).json({error:`Can't find the person info that id=${id}`})
 })
 
+/**
+ * 创建新的记录
+ */
 app.post('/api/persons',(req,rsp) => {
     const body = req.body;
-    console.log('post request body: ',body);
     if(!body.name) {
         return rsp.status(400).json({error:'Name must not be empty'});
     }
