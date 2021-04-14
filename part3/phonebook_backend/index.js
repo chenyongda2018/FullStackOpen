@@ -1,24 +1,26 @@
 const express = require('express');
 const morgan = require('morgan');
+const cors = require('cors');
 
-const app = express();
-
-app.use(express.json());
 morgan.token('body',(req,rsp) => JSON.stringify(req.body))
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
-
 /**
  * 对未知页面处理
  * @param {*} req 
  * @param {*} rsp 
  */
-const unknownEndpoint = (req,rsp,next) => {
+ const unknownEndpoint = (req,rsp,next) => {
+     console.log('path: ',req.path);
     if(!req.path.startsWith('/api/persons')) {
         return rsp.status(404).send({error: 'uknown error.'});
     }
     next();
 }
 
+const app = express();
+app.use(cors());
+app.use(express.static('build'))
+app.use(express.json());
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
 app.use(unknownEndpoint);
 
 let persons =  [
@@ -101,6 +103,16 @@ app.post('/api/persons',(req,rsp) => {
     }
     persons = persons.concat(person);
     rsp.status(200).json(person);
+})
+
+app.delete('/api/persons/:id',(req,rsp) => {
+    const id = Number(req.params.id);
+    const person = persons.find( p => p.id === id);
+    if(person) {
+        persons = persons.filter( p => p.id !== id);
+        return rsp.status(200).end();
+    }
+    return rsp.status(400).json({error: `the person dont't exist in server`});
 })
 
 const generateId = () => {
