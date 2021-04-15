@@ -77,6 +77,11 @@ const App = () => {
         showNotification(`Added ${personValue}`);
         setPersons(persons.concat(rsp.data));
       })
+      .catch(error => {
+        const errMsg = error.response.data;
+        showErrorMsg(errMsg.error);
+        console.log('error:',error.response.data);
+      })
     }
     setPersonValue('');
     setCurTel('');
