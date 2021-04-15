@@ -4,18 +4,26 @@ const morgan = require('morgan');
 const cors = require('cors');
 const Person = require('./models/person')
 
-morgan.token('body',(req,rsp) => JSON.stringify(req.body))
+morgan.token('body', (req, rsp) => JSON.stringify(req.body))
 /**
  * 对未知页面处理
  * @param {*} req 
  * @param {*} rsp 
  */
- const unknownEndpoint = (req,rsp,next) => {
-     console.log('path: ',req.path);
-    if(!req.path.startsWith('/api/')) {
-        return rsp.status(404).send({error: 'uknown error.'});
+const unknownEndpoint = (req, rsp, next) => {
+    console.log('path: ', req.path);
+    if (!req.path.startsWith('/api/')) {
+        return rsp.status(404).send({ error: 'uknown error.' });
     }
     next();
+}
+
+const errorHandler = (error, req, rsp, next) => {
+    console.error(error);
+    if (error.name === 'CastError' && error.kind === 'ObjectId') {
+        return rsp.status(400).send({ error: 'malformatted id' })
+    }
+    next(error)
 }
 
 const app = express();
@@ -28,10 +36,10 @@ app.use(unknownEndpoint);
 /**
  * 获取所有联系人
  */
-app.get('/api/persons',(req,rsp)=>{
+app.get('/api/persons', (req, rsp) => {
     Person.find({}).then(result => {
-        if(!result) {
-            return rsp.status(400).json({error:'There is no any data.'})
+        if (!result) {
+            return rsp.status(400).json({ error: 'There is no any data.' })
         }
         return rsp.status(200).json(result);
     })
@@ -40,10 +48,10 @@ app.get('/api/persons',(req,rsp)=>{
 /**
  * 获取总体描述
  */
-app.get('/api/infos',(req,rsp) => {
+app.get('/api/infos', (req, rsp) => {
     const curTime = new Date();
     Person.find({}).then(result => {
-        console.log('person infos:',result);
+        console.log('person infos:', result);
         rsp.send(
             `Phonebook has info for ${result.length} people.<br/>
             ${curTime}`
@@ -54,23 +62,30 @@ app.get('/api/infos',(req,rsp) => {
 /**
  * 根据id查询
  */
-app.get('/api/persons/:id',(req,rsp) => {
-    console.log('get person id: ',req.params.id);
-    Person.findById(req.params.id).then(person => {
-        rsp.json(person);
-    })
+app.get('/api/persons/:id', (req, rsp, next) => {
+    console.log('get person id: ', req.params.id);
+    Person
+        .findById(req.params.id)
+        .then(person => {
+            if (person) {
+                rsp.json(person)
+            } else {
+                rsp.status(404).end()
+            }
+        })
+        .catch(error => next(error))
 })
 
 /**
  * 创建新的记录
  */
-app.post('/api/persons',(req,rsp) => {
+app.post('/api/persons', (req, rsp) => {
     const body = req.body;
-    if(!body.name) {
-        return rsp.status(400).json({error:'Name must not be empty'});
+    if (!body.name) {
+        return rsp.status(400).json({ error: 'Name must not be empty' });
     }
-    if(!body.number) {
-        return rsp.status(400).json({error:'Number must not be empty'});
+    if (!body.number) {
+        return rsp.status(400).json({ error: 'Number must not be empty' });
     }
     const person = new Person({
         name: body.name,
@@ -81,18 +96,38 @@ app.post('/api/persons',(req,rsp) => {
     })
 })
 
-app.delete('/api/persons/:id',(req,rsp) => {
+app.put('/api/persons/:id', (req, rsp, next) => {
+    const person = {
+        name: req.body.name,
+        number: req.body.number
+    }
+    //new:true 决定返回新对象还是旧对象
     Person
-        .findByIdAndDelete(req.params.id)
+        .findByIdAndUpdate(req.params.id, person, { new: true })
+        .then(updatePerson => {
+            if (updatePerson) {
+                rsp.json(updatePerson)
+            } else {
+                rsp.status(404).end()
+            }
+        })
+        .catch(error => next(error))
+})
+
+app.delete('/api/persons/:id', (req, rsp) => {
+    Person
+        .findByIdAndRemove(req.params.id)
         .then(result => {
-            return rsp.end();
+            return rsp.status(204).end();
         })
         .catch(error => {
-            return rsp.status(400).json({error: `the person dont't exist in server`});
+            next(error)
         })
 })
 
+app.use(errorHandler);
+
 const PORT = 3001;
-app.listen(PORT,()=> {
-    console.log('Server is listenning port:'+PORT);
+app.listen(PORT, () => {
+    console.log('Server is listenning port:' + PORT);
 })
